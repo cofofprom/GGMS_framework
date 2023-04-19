@@ -3,17 +3,15 @@ from abc import ABC
 from scipy.stats import t
 from numba import vectorize, float64, int64
 
-@np.vectorize
 def pcorr_pvalues(r, n, N):
     dof = n - N
-    stat = r * np.sqrt(dof / (1 - ((r - 1e-6) ** 2)))
+    stat = r * np.sqrt(dof / (1 - (r ** 2)))
     pval = 2 * t.sf(np.abs(stat), dof)
     return pval
 
-@np.vectorize
 def corr_pvalues(r, n, N=0):
     dof = n - 2
-    stat = r * np.sqrt(dof / (1 - ((r - 1e-6) ** 2)))
+    stat = r * np.sqrt(dof / (1 - (r ** 2)))
     pval = 2 * t.sf(np.abs(stat), dof)
     return pval
 
@@ -22,8 +20,9 @@ def pcorrcoef(X):
     prec = np.linalg.inv(cov)
     D = np.diag(1 / np.sqrt(np.diag(prec)))
     corr = -(D @ prec @ D)
+    np.fill_diagonal(corr, 1)
     
-    return corr + np.eye(X.shape[0])
+    return corr
 
 class MHTSolver:
     def __init__(self, alpha, p_val_fun, corr_fun=np.corrcoef):
@@ -35,7 +34,8 @@ class MHTSolver:
         self.n_obs, self.dim = X.shape
         self.n_tests = self.dim * (self.dim - 1) // 2
         self.corr_mat = self.corr_fun(X.T)
-        self.p_values = self.p_val_fun(self.corr_mat, self.n_obs, self.dim)
+        np.fill_diagonal(self.corr_mat, 0)
+        self.p_values = np.vectorize(self.p_val_fun)(self.corr_mat, self.n_obs, self.dim)
         
     def apply_correction(self, procedure):
         if procedure == 'SI':

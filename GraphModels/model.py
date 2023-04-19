@@ -5,21 +5,8 @@ import networkx as nx
 from scipy.stats import multivariate_normal
 
 
-def corr_model_builder(cov, prec=None):
-    D = np.diag(1 / np.sqrt(np.diag(cov)))
-    corr = D @ cov @ D
-    
-    return corr, (corr >= 1e-6).astype(int) - np.eye(corr.shape[0])
-
-def pcorr_model_builder(cov, prec=None):
-    D = np.diag(1 / np.sqrt(np.diag(prec)))
-
-    corr = -(D @ prec @ D)
-    
-    return corr, (corr != 0).astype(int) - np.eye(corr.shape[0])
-
 class RandomGraphicalModel(ABC):
-    def __init__(self, dim, density):
+    def __init__(self, dim, density, random_state=None):
         self.dim = dim
         self.density = density
         self.precision = None
@@ -27,6 +14,7 @@ class RandomGraphicalModel(ABC):
         self.corr_model = None
         self.adj = None
         self.graph = None
+        self.random_state = random_state
         
     def sample(self, n, dist=multivariate_normal):
         return dist.rvs(np.zeros(self.dim), self.covariance, size=n)
@@ -45,29 +33,38 @@ class RandomGraphicalModel(ABC):
     
     def apply_metrics(self, other_G, metrics):
         TP, TN, FP, FN = self.confusion(other_G)
-        return tuple(metric(TP, TN, FP, FN) for metric in metrics)
+        return np.array([metric(TP, TN, FP, FN) for metric in metrics])
+    
+    def get_density(self):
+        return nx.density(self.graph)
         
-
-class CholRandomModel(RandomGraphicalModel):
-    def __init__(self, dim, density, model_builder, corr_func=np.corrcoef):
-        super().__init__(dim, density, model_builder, corr_func)
         
-        self.precision = make_sparse_spd_matrix(self.dim, alpha=self.density, norm_diag=True)
+class CholPCorrModel(RandomGraphicalModel):
+    def __init__(self, dim, density, random_state=None):
+        super().__init__(dim, density, random_state=None)
+        
+        self.precision = make_sparse_spd_matrix(self.dim, alpha=self.density, norm_diag=True, random_state=random_state)
         self.covariance = np.linalg.inv(self.precision)
         
-        self.corr_model, self.adj = self.model_builder(self.covariance, self.precision)
+        D = np.diag(1 / np.sqrt(np.diag(self.precision)))
+        
+        self.pcorr = -(D @ self.precision @ D)
+        np.fill_diagonal(self.pcorr, 1)
+        
+        self.adj = (np.abs(self.pcorr) >= 1e-6).astype(int) - np.eye(self.dim)
         self.graph = nx.from_numpy_array(self.adj)
+   
         
-
-class PathTestModel(RandomGraphicalModel):
-      def __init__(self, dim, delta, model_builder, corr_func=np.corrcoef):
-        super().__init__(dim, (dim - 1) / (dim * (dim - 1) / 2), model_builder, corr_func)
+class CholCorrModel(RandomGraphicalModel):
+    def __init__(self, dim, density, random_state=None):
+        super().__init__(dim, density, random_state=None)
         
-        self.precision = np.diag([delta for _ in range(dim - 1)], k=1) + np.diag([delta for _ in range(dim - 1)], k=-1) + np.eye(dim)
-        self.covariance = np.linalg.inv(self.precision)
+        self.covariance = make_sparse_spd_matrix(self.dim, alpha=self.density, norm_diag=True, random_state=self.random_state)
+        self.precision = np.linalg.inv(self.covariance)
         
-        self.corr_model, self.adj = self.model_builder(self.covariance, self.precision)
+        D = np.diag(1 / np.sqrt(np.diag(self.covariance)))
+        
+        self.corr = (D @ self.covariance @ D)
+        
+        self.adj = (np.abs(self.corr) >= 1e-6).astype(int) - np.eye(self.dim)
         self.graph = nx.from_numpy_array(self.adj)
-        
-        
-class Chol
