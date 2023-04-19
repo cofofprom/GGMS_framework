@@ -3,10 +3,10 @@ from GraphModels.solvers import *
 from GraphModels.metrics import *
 from networkx import from_numpy_array, draw
 import multiprocessing as mp
+from time import perf_counter
 
-def single_model_MHT_experiment(model, n_samples, num_iter, metrics, procedures=['SI', 'B', 'H', 'BH', 'BY']):
+def single_model_MHT_experiment(model, n_samples, num_iter, metrics, solver, procedures=['SI', 'B', 'H', 'BH', 'BY']):
     experiment_data = np.zeros((len(metrics), len(procedures)))
-    solver = MHTSolver(0.05, pcorr_pvalues, pcorrcoef)
     
     for _ in range(num_iter):
         samples = model.sample(n_samples)
@@ -24,13 +24,15 @@ def single_model_MHT_experiment(model, n_samples, num_iter, metrics, procedures=
     return experiment_data
 
 
-def familywise_MHT_experiments(model_class, dim, density, n_samples, num_iter, num_repl, metrics, procedures=['SI', 'B', 'H', 'BH', 'BY'], n_jobs=None):
-    experiment_data = np.zeros((len(metrics), len(procedures)))
-    
+def familywise_MHT_experiments(model_class, solver, dim, density, n_samples, num_iter, num_repl, metrics, procedures=['SI', 'B', 'H', 'BH', 'BY'], n_jobs=None, verbose=False):    
+    start = perf_counter()
     with mp.Pool(processes=n_jobs) as pool:
-        waiters = [pool.apply_async(single_model_MHT_experiment, (model_class(dim, density), n_samples, num_repl, metrics, procedures)) for _ in range(num_iter)]
+        waiters = [pool.apply_async(single_model_MHT_experiment, (model_class(dim, density), n_samples, num_repl, metrics, solver, procedures)) for _ in range(num_iter)]
         results = np.stack([waiter.get() for waiter in waiters])
     
+    end = perf_counter()
+    if verbose:
+        print(f'Family-wise MHT experiment with {density} completed in time: {end - start}s')
     return results.mean(axis=0)
     
     
