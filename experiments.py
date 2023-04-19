@@ -24,15 +24,21 @@ def single_model_MHT_experiment(model, n_samples, num_iter, metrics, solver, pro
     return experiment_data
 
 
-def familywise_MHT_experiments(model_class, solver, dim, density, n_samples, num_iter, num_repl, metrics, procedures=['SI', 'B', 'H', 'BH', 'BY'], n_jobs=None, verbose=False):    
+def familywise_MHT_experiments(model_class, solver, dim,
+                               density, n_samples, num_iter,
+                               num_repl, metrics, procedures=['SI', 'B', 'H', 'BH', 'BY'],
+                               n_jobs=None, verbose=False):    
     start = perf_counter()
     with mp.Pool(processes=n_jobs) as pool:
-        waiters = [pool.apply_async(single_model_MHT_experiment, (model_class(dim, density), n_samples, num_repl, metrics, solver, procedures)) for _ in range(num_iter)]
+        waiters = [pool.apply_async(single_model_MHT_experiment,
+                                    (model_class(dim, density), n_samples,
+                                     num_repl, metrics,
+                                     solver, procedures)) for _ in range(num_iter)]
         results = np.stack([waiter.get() for waiter in waiters])
     
     end = perf_counter()
     if verbose:
-        print(f'Family-wise MHT experiment with {density} completed in time: {end - start}s')
+        print(f'Family-wise MHT experiment with {np.around(density, 3)} completed in time: {np.around(end - start, 3)}s')
     return results.mean(axis=0)
     
     
