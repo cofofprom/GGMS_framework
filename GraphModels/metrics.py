@@ -16,3 +16,6 @@ def F1(x, y, z, w):
     precision = 1 - FDR(x, y, z, w)
     recall = TPR(x, y, z, w)
     return hmean([precision, recall])
+
+def TNR(x, y, z, w):
+    return y / (y + z) if y + z > 0 else 1

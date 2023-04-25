@@ -1,7 +1,6 @@
 import numpy as np
 from abc import ABC
 from scipy.stats import t
-from numba import vectorize, float64, int64
 
 def pcorr_pvalues(r, n, N):
     dof = n - N
