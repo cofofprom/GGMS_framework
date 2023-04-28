@@ -6,9 +6,9 @@ import multiprocessing as mp
 from time import perf_counter
 
 def single_model_MHT_experiment(model, n_samples, num_iter, metrics, solver, procedures=['SI', 'B', 'H', 'BH', 'BY']):
-    experiment_data = np.zeros((len(metrics), len(procedures)))
+    experiment_data = np.zeros((num_iter, len(metrics), len(procedures)))
     
-    for _ in range(num_iter):
+    for i in range(num_iter):
         samples = model.sample(n_samples)
         solver.fit(samples)
         
@@ -17,9 +17,7 @@ def single_model_MHT_experiment(model, n_samples, num_iter, metrics, solver, pro
             
             eval_metrics = model.apply_metrics(pred_graph, metrics)
             
-            experiment_data[:, idx] += eval_metrics
-            
-    experiment_data /= num_iter
+            experiment_data[i, :, idx] += eval_metrics
 
     return experiment_data
 
@@ -39,6 +37,6 @@ def familywise_MHT_experiments(model_class, solver, dim,
     end = perf_counter()
     if verbose:
         print(f'Family-wise MHT experiment with {np.around(density, 3)} completed in time: {np.around(end - start, 3)}s')
-    return results.mean(axis=0)
+    return results
     
     

@@ -19,3 +19,6 @@ def F1(x, y, z, w):
 
 def TNR(x, y, z, w):
     return y / (y + z) if y + z > 0 else 1
+
+def FOR(x, y, z, w):
+    return w / (y + w) if y + w > 0 else 0
