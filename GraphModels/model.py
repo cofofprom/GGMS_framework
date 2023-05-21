@@ -68,3 +68,16 @@ class CholCorrModel(RandomGraphicalModel):
         
         self.adj = (np.abs(self.corr) >= 1e-6).astype(int) - np.eye(self.dim)
         self.graph = nx.from_numpy_array(self.adj)
+        
+        
+class CholTauModel(RandomGraphicalModel):
+    def __init__(self, dim, density, random_state=None):
+        super().__init__(dim, density, random_state=None)
+        
+        self.covariance = make_sparse_spd_matrix(self.dim, alpha=self.density, norm_diag=True, random_state=self.random_state)
+        self.covariance = np.sin(self.covariance * np.pi / 2)
+        self.corr = self.covariance
+        self.precision = np.linalg.inv(self.covariance)
+        
+        self.adj = (np.abs(self.corr) >= 1e-6).astype(int) - np.eye(self.dim)
+        self.graph = nx.from_numpy_array(self.adj)

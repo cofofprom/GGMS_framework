@@ -1,6 +1,6 @@
 import numpy as np
 from abc import ABC
-from scipy.stats import t
+from scipy.stats import t, kendalltau
 
 def pcorr_pvalues(r, n, N):
     dof = n - N
@@ -14,6 +14,9 @@ def corr_pvalues(r, n, N=0):
     pval = 2 * t.sf(np.abs(stat), dof)
     return pval
 
+def tau_pvalues(r, n, N=0):
+    return r
+
 def pcorrcoef(X):
     cov = np.cov(X)
     prec = np.linalg.inv(cov)
@@ -22,6 +25,15 @@ def pcorrcoef(X):
     np.fill_diagonal(corr, 1)
     
     return corr
+
+def tau(X):
+    corr = np.zeros((X.shape[0], X.shape[0]))
+    for idx1 in range(len(X)):
+        for idx2 in range(len(X)):
+            corr[idx1, idx2] = kendalltau(X[idx1], X[idx2]).pvalue
+            
+    return corr
+                
 
 class MHTSolver:
     def __init__(self, alpha, p_val_fun, corr_fun=np.corrcoef):
