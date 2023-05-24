@@ -1,6 +1,6 @@
 import numpy as np
 from abc import ABC
-from scipy.stats import t, kendalltau
+from scipy.stats import t, kendalltau, norm
 
 def pcorr_pvalues(r, n, N):
     dof = n - N
@@ -34,7 +34,28 @@ def tau(X):
             
     return corr
                 
+def fechner_corr(x, y):
+    ind = ((x - np.mean(x))*(y - np.mean(y)))
+    res = (np.sum((ind >= 0)) - np.sum((ind < 0))) / len(x)
+    return res
 
+def fechnercoef(X):
+    corr = np.eye(X.shape[0])
+    for idx1 in range(len(X)):
+        for idx2 in range(idx1 + 1, len(X)):
+            corr[idx1, idx2] = fechner_corr(X[idx1], X[idx2])
+
+    return corr + corr.T - np.eye(X.shape[0])
+
+def fechner_pvalues(r, n, N=0):
+    r = (r*n + n) / 2
+    stat = (r - 0.5*n) / np.sqrt(0.5*n*0.5)
+    
+    pvalue = 2 * norm.sf(np.abs(stat))
+    
+    return pvalue
+    
+    
 class MHTSolver:
     def __init__(self, alpha, p_val_fun, corr_fun=np.corrcoef):
         self.alpha = alpha
