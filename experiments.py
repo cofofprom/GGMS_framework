@@ -4,12 +4,14 @@ from GraphModels.metrics import *
 from networkx import from_numpy_array, draw
 import multiprocessing as mp
 from time import perf_counter
+from scipy.stats import multivariate_normal
 
-def single_model_MHT_experiment(model, n_samples, num_iter, metrics, solver, procedures=['SI', 'B', 'H', 'BH', 'BY']):
+def single_model_MHT_experiment(model, n_samples, num_iter, metrics, solver, procedures=['SI', 'B', 'H', 'BH', 'BY'],
+                                dist=multivariate_normal, **distkwargs):
     experiment_data = np.zeros((num_iter, len(metrics), len(procedures)))
     
     for i in range(num_iter):
-        samples = model.sample(n_samples)
+        samples = model.sample(n_samples, dist=dist, **distkwargs)
         solver.fit(samples)
         
         for idx, procedure in enumerate(procedures):
@@ -25,13 +27,14 @@ def single_model_MHT_experiment(model, n_samples, num_iter, metrics, solver, pro
 def familywise_MHT_experiments(model_class, solver, dim,
                                density, n_samples, num_iter,
                                num_repl, metrics, procedures=['SI', 'B', 'H', 'BH', 'BY'],
-                               n_jobs=None, verbose=False):    
+                               n_jobs=None, verbose=False,
+                               dist=multivariate_normal, **distkwargs):    
     start = perf_counter()
     with mp.Pool(processes=n_jobs) as pool:
         waiters = [pool.apply_async(single_model_MHT_experiment,
                                     (model_class(dim, density), n_samples,
                                      num_repl, metrics,
-                                     solver, procedures)) for _ in range(num_iter)]
+                                     solver, procedures, dist), distkwargs) for _ in range(num_iter)]
         results = np.stack([waiter.get() for waiter in waiters])
     
     end = perf_counter()
