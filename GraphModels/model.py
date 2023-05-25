@@ -16,8 +16,8 @@ class RandomGraphicalModel(ABC):
         self.graph = None
         self.random_state = random_state
         
-    def sample(self, n, dist=multivariate_normal):
-        return dist.rvs(np.zeros(self.dim), self.covariance, size=n)
+    def sample(self, n, dist=multivariate_normal, **kwargs):
+        return dist.rvs(np.zeros(self.dim), self.covariance, size=n, **kwargs)
     
     def confusion(self, other_G):
         p = other_G.edges
