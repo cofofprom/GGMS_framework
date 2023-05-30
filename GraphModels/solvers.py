@@ -29,8 +29,10 @@ def pcorrcoef(X):
 def tau(X):
     corr = np.zeros((X.shape[0], X.shape[0]))
     for idx1 in range(len(X)):
-        for idx2 in range(len(X)):
+        for idx2 in range(idx1, len(X)):
             corr[idx1, idx2] = kendalltau(X[idx1], X[idx2]).pvalue
+            
+    corr += corr.T + np.eye(X.shape[0])
             
     return corr
                 
