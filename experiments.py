@@ -42,4 +42,36 @@ def familywise_MHT_experiments(model_class, solver, dim,
         print(f'Family-wise MHT experiment with {np.around(density, 3)} completed in time: {np.around(end - start, 3)}s')
     return results
     
+def single_model_GL_experiment(model, n_samples, num_iter, solver, dist=multivariate_normal, **distkwargs):
+    experiment_data = np.zeros((num_iter, 4, 1))
     
+    for i in range(num_iter):
+        samples = model.sample(n_samples, dist=dist, **distkwargs)
+        solver.fit(samples)
+        
+        pr = solver.get_precision()
+        np.fill_diagonal(pr, 0)
+        pred_graph = from_numpy_array((pr != 0.).astype(int))
+        
+        eval_metrics = model.confusion(pred_graph)
+        eval_metrics = eval_metrics[1], eval_metrics[3], eval_metrics[2], eval_metrics[0]
+        
+        experiment_data[i, :, 0] += eval_metrics
+        
+    return experiment_data
+
+def familywise_GL_experiments(model_class, solver, dim,
+                               density, n_samples, num_iter,
+                               num_repl, n_jobs=None, verbose=False,
+                               dist=multivariate_normal, **distkwargs):
+    start = perf_counter()
+    with mp.Pool(processes=n_jobs) as pool:
+        waiters = [pool.apply_async(single_model_GL_experiment,
+                                    (model_class(dim, density), n_samples,
+                                     num_repl, solver, dist), distkwargs) for _ in range(num_iter)]
+        results = np.stack([waiter.get() for waiter in waiters])
+    
+    end = perf_counter()
+    if verbose:
+        print(f'Family-wise GL experiment with {np.around(density, 3)} completed in time: {np.around(end - start, 3)}s')
+    return results, end - start

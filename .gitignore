@@ -13,3 +13,5 @@ GraphModels/__pycache__/metrics.cpython-39.pyc
 GraphModels/__pycache__/model.cpython-39.pyc
 GraphModels/__pycache__/solvers.cpython-39.pyc
 etc/experimentPcorr40T.bin
+*.png
+etc/
