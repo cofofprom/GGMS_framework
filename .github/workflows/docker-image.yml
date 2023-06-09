@@ -27,12 +27,6 @@ jobs:
       with:
         username: ${{ secrets.DOCKERHUB_LOGIN }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          
-#     - name: Extract metadata (tags, labels) for Docker
-#       id: meta
-#       uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
-#       with:
-#         images: zatrolque/docker_lab2
 
     - name: Build and push Docker image
       uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
@@ -45,7 +39,6 @@ jobs:
     needs: build_and_deploy
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v3
       - name: Print hello world
-      - run: echo "Hello world!"
+        run: echo "Hello world!"
       
