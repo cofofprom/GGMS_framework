@@ -41,3 +41,10 @@ jobs:
         file: ./Dockerfile
         push: true
         tags: zatrolque/docker_lab2
+  run_on_host:
+    needs: build_and_deploy
+    runs-on: self-hosted
+    steps:
+      - name: Print hello world
+      - run: echo "Hello world!"
+      
