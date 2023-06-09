@@ -40,5 +40,5 @@ jobs:
     runs-on: self-hosted
     steps:
       - name: Print hello world
-        run: docker run -t -p 8888:8888 zatrolque/docker_lab2
+        run: docker run -i -p 8888:8888 zatrolque/docker_lab2
       
