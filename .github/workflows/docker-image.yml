@@ -40,3 +40,4 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
+        tags: zatrolque/docker_lab2
