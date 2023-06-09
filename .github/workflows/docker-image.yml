@@ -1,0 +1,24 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . -t docker_lab2
+      
+    - name: Change tag
+      run: docker tag docker_lab2 zatrolque/docker_lab2
+      
+    - name: Push to docker hub
+      run: docker push zatrolque/docker_lab2
