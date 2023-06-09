@@ -28,11 +28,11 @@ jobs:
         username: ${{ secrets.DOCKERHUB_LOGIN }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
           
-    - name: Extract metadata (tags, labels) for Docker
-      id: meta
-      uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
-      with:
-        images: zatrolque/docker_lab2
+#     - name: Extract metadata (tags, labels) for Docker
+#       id: meta
+#       uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+#       with:
+#         images: zatrolque/docker_lab2
 
     - name: Build and push Docker image
       uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
@@ -40,5 +40,3 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
-        tags: latest
-        labels: ${{ steps.meta.outputs.labels }}
