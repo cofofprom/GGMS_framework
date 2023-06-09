@@ -8,27 +8,28 @@ on:
 
 jobs:
 
-  build:
+  build_and_deploy:
 
     runs-on: ubuntu-latest
 
     steps:
+    - uses: actions/checkout@v3
+    
+    - name: Linter
+      uses: WillCodeForCats/python-lint-action@v1.0.1
+      with:
+        use-flake8: true
+        use-black: false
+        use-isort: false
+    
     - name: Log in to Docker Hub
       uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
       with:
         username: ${{ secrets.DOCKERHUB_LOGIN }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
           
-    - uses: actions/checkout@v3
     - name: Build the Docker image
       run: docker build . -t zatrolque/docker_lab2
       
-    #- name: Change tag
-    #  run: docker tag docker_lab2 zatrolque/docker_lab2
-      
     - name: Push to docker hub
       run: docker push zatrolque/docker_lab2
-      
-    - name: Python Code Quality Action
-      uses: WillCodeForCats/python-lint-action@v1.0.1
-      
