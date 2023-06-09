@@ -28,3 +28,7 @@ jobs:
       
     - name: Push to docker hub
       run: docker push zatrolque/docker_lab2
+      
+    - name: Python Code Quality Action
+      uses: WillCodeForCats/python-lint-action@v1.0.1
+      
