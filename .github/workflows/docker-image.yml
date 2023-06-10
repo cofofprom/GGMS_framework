@@ -1,6 +1,6 @@
 name: Docker Image CI
 
-on:
+on: # trigger on push or pull request to master branch
   push:
     branches: [ "master" ]
   pull_request:
@@ -8,7 +8,7 @@ on:
 
 jobs:
 
-  build_and_deploy:
+  build_and_deploy: # build and push to docker hub job
 
     runs-on: ubuntu-latest
 
@@ -35,10 +35,10 @@ jobs:
         file: ./Dockerfile
         push: true
         tags: zatrolque/docker_lab2
-  run_on_host:
+  run_on_host: # job requires that build and push job was completed. run jupyter on local pc.
     needs: build_and_deploy
     runs-on: self-hosted
     steps:
-      - name: Print hello world
+      - name: Run jupyter notebook
         run: docker run -i -p 8888:8888 zatrolque/docker_lab2
       
