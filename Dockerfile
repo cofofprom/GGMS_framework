@@ -1,9 +1,13 @@
-FROM jupyter/scipy-notebook # use jupyter image
+# use jupyter image
+FROM jupyter/scipy-notebook
 
 WORKDIR /home
 
-COPY . . # copy code to /home
+# copy code to /home
+COPY . .
 
-RUN pip3 install -r requirements.txt # install additional requirements that wasn't in original image
+# install additional requirements that wasn't in original image
+RUN pip3 install -r requirements.txt
 
-CMD jupyter notebook --allow-root --ip 0.0.0.0 --no-browser # run jupyter
+# run jupyter
+CMD jupyter notebook --allow-root --ip 0.0.0.0 --no-browser 
