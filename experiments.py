@@ -56,7 +56,10 @@ def single_model_GL_experiment(model, n_samples, num_iter,
 
     for i in range(num_iter):
         samples = model.sample(n_samples, dist=dist, **distkwargs)
-        solver.fit(samples)
+        try:
+            solver.fit(samples)
+        except:
+            continue
 
         pr = solver.get_precision()
         np.fill_diagonal(pr, 0)
@@ -89,7 +92,7 @@ def familywise_GL_experiments(model_class, solver,
     end = perf_counter()
     if verbose:
         print((
-            f'Family-wise GL experiment'
-            f'with {np.around(density, 3)}'
+            f'Family-wise GL experiment '
+            f'with {np.around(density, 3)} '
             f'completed in time: {np.around(end - start, 3)}s'))
     return results, end - start
