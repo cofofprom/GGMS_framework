@@ -93,3 +93,30 @@ class CholTauModel(RandomGraphicalModel):
 
         self.adj = (np.abs(self.corr) >= 1e-6).astype(int) - np.eye(self.dim)
         self.graph = nx.from_numpy_array(self.adj)
+
+class DiagDominantPcorrModel(RandomGraphicalModel):
+    def __init__(self, dim, density, random_state=None):
+        super().__init__(dim, density, random_state=None)
+
+        self.graph = nx.gnp_random_graph(self.dim, self.density)
+        self.adj = nx.adjacency_matrix(self.graph).toarray()
+        
+        A = np.random.uniform(0.5, 1, size=(self.dim, self.dim))
+        B = np.random.choice([-1, 1], size=(self.dim, self.dim))
+
+        covar = self.adj * A * B
+        rowsums = np.sum(np.abs(covar), axis=1)
+        rowsums[rowsums == 0] = 0.0001
+        covar = covar / (1.5 * rowsums[:, None])
+        covar = (covar + covar.T) / 2 + np.eye(self.dim)
+
+        invA = np.linalg.inv(covar)
+        D = np.diag(1 / np.sqrt(np.diag(invA)))
+
+        self.covariance = D @ invA @ D
+        self.precision = np.linalg.inv(self.covariance)
+
+        pD = np.diag(1 / np.sqrt(np.diag(self.precision)))
+
+        self.pcorr = -(pD @ self.precision @ pD)
+        np.fill_diagonal(self.pcorr, 1)

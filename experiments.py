@@ -59,6 +59,7 @@ def single_model_GL_experiment(model, n_samples, num_iter,
         try:
             solver.fit(samples)
         except:
+            print('\n!Skip!\n')
             continue
 
         pr = solver.get_precision()
