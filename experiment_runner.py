@@ -64,8 +64,15 @@ def multipleModelsRun(model_class, dim, density, n_samples, num_iter, num_models
 
         return results, elapsed, ave_iter
 
+def density_mapping(x, params):
+    a, b, c = params
+    if a == 0 and b == 0 and c == 0:
+        return x
+    
+    return a * np.power(x, b) + c
 
 if __name__ == '__main__':
+    chol_params = np.array([-0.58799031,  1.7174485 ,  0.92422766])
 
     parser = argparse.ArgumentParser()
     parser.add_argument('json_path', action='store', type=str)
@@ -99,11 +106,13 @@ if __name__ == '__main__':
 
     experiment_params = json_config
 
-    print('Successfully loaded config...')
+    params = (0, 0, 0) if 'Chol' not in raw_model else chol_params
 
+    print('Successfully loaded config...')
     data = []
     for density in np.arange(0.1, 1, 0.1):
-        run_result = multipleModelsRun(density=density, **experiment_params)
+        mapped = density_mapping(density, params)
+        run_result = multipleModelsRun(density=mapped, **experiment_params)
         data.append(run_result[0])
 
     data = np.stack(data)
