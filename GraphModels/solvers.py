@@ -1,5 +1,7 @@
 import numpy as np
 from scipy.stats import t, kendalltau, norm
+from sklearn.linear_model import Lasso
+import networkx as nx
 
 
 def pcorr_pvalues(r, n, N):
@@ -149,3 +151,34 @@ class MHTSolver:
                 adj[tuple(idx_sorted[k - 1])] = 0
                 adj[tuple(idx_sorted[k - 1])[::-1]] = 0
             return adj
+
+class GraphLasso:
+    def __init__(self, reg_param, max_iter=100):
+        self.alpha = reg_param
+        self.max_iter = max_iter
+        self.lasso = Lasso(alpha=self.alpha, fit_intercept=False)
+
+    def fit(self, cov):
+        S = cov
+        W = S + self.alpha * np.eye(cov.shape[0])
+        last_W = W.copy()
+        for iter in range(self.max_iter):
+            for p in range(cov.shape[0]):
+                to_pick = [i for i in range(cov.shape[0]) if i != p]
+                s12 = S[p, to_pick]
+                w11 = W[to_pick, :][:, to_pick]
+
+                self.lasso.fit(w11, s12)
+
+                w12_upd = w11 @ self.lasso.coef_
+                W[p, [j for j in range(cov.shape[0]) if j != p]] = w12_upd
+                W[[j for j in range(cov.shape[0]) if j != p], p] = w12_upd
+
+            mac = np.mean(np.abs(W - last_W))
+            if mac <= 1e-4:
+                break
+            last_W = W.copy()
+
+        self.precision = np.linalg.inv(W)
+        self.adj = (self.precision != 0.).astype(int) - np.eye(self.precision.shape[0])
+        self.graph = nx.from_numpy_array(self.adj)
