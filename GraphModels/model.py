@@ -139,8 +139,8 @@ class DiagDominantPcorrModel(RandomGraphicalModel):
         invA = np.linalg.inv(covar)
         D = np.diag(1 / np.sqrt(np.diag(invA)))
 
-        self.covariance = D @ invA @ D
-        self.precision = np.linalg.inv(self.covariance)
+        self.precision = D @ invA @ D
+        self.covariance = np.linalg.inv(self.precision)
 
         pD = np.diag(1 / np.sqrt(np.diag(self.precision)))
 

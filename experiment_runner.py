@@ -75,13 +75,21 @@ if __name__ == '__main__':
     chol_params = np.array([-0.58799031,  1.7174485 ,  0.92422766])
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('json_path', action='store', type=str)
+    parser.add_argument('model_class', action='store', type=str)
+    parser.add_argument('solver', action='store', type=str)
+    parser.add_argument('distribution', action='store', type=str)
+    parser.add_argument('reg_param', action='store', type=float)
+    parser.add_argument('dim', action='store', type=int)
+    parser.add_argument('n_samples', action='store', type=int)
+    parser.add_argument('num_iter', action='store', type=int)
+    parser.add_argument('num_models', action='store', type=int)
+    parser.add_argument('verbose', action='store', type=bool)
+    parser.add_argument('n_jobs', action='store', type=int)
+
     args = parser.parse_args()
+    json_config = vars(args)
 
-    with open(args.json_path, 'r') as fi:
-        json_config = json.load(fi)
-
-    prefix_path = os.path.dirname(args.json_path)
+    prefix_path = os.getcwd()
 
     raw_model = json_config['model_class']
     raw_solver = json_config['solver']

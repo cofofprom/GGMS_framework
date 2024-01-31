@@ -153,16 +153,16 @@ class MHTSolver:
             return adj
 
 class GraphLasso:
-    def __init__(self, reg_param, max_iter=100):
+    def __init__(self, reg_param, max_iter=100, fit_intercept=False):
         self.alpha = reg_param
         self.max_iter = max_iter
-        self.lasso = Lasso(alpha=self.alpha, fit_intercept=False)
+        self.lasso = Lasso(alpha=self.alpha, fit_intercept=fit_intercept)
 
     def fit(self, cov):
         S = cov
         W = S + self.alpha * np.eye(cov.shape[0])
         last_W = W.copy()
-        for iter in range(self.max_iter):
+        for _ in range(self.max_iter):
             for p in range(cov.shape[0]):
                 to_pick = [i for i in range(cov.shape[0]) if i != p]
                 s12 = S[p, to_pick]
@@ -182,3 +182,5 @@ class GraphLasso:
         self.precision = np.linalg.inv(W)
         self.adj = (self.precision != 0.).astype(int) - np.eye(self.precision.shape[0])
         self.graph = nx.from_numpy_array(self.adj)
+
+        return self
