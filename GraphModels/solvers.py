@@ -152,35 +152,74 @@ class MHTSolver:
                 adj[tuple(idx_sorted[k - 1])[::-1]] = 0
             return adj
 
+def soft_treshhold(x, t):
+    return np.sign(x) * np.max(np.abs(x) - t, 0)
+
+def coordinate_descent(V, u, reg_param, max_iter=100):
+    dim = V.shape[0]
+    beta = np.zeros(dim)
+    old_beta = beta.copy()
+
+    for _ in range(max_iter):
+        for j in range(dim):
+            reg_sum = np.sum([V[k, j] * beta[k] for k in range(dim) if k != j])
+            beta[j] = soft_treshhold(u[j] - reg_sum, reg_param) / V[j, j]
+
+        if np.linalg.norm(old_beta - beta) == 0.:
+            break
+        old_beta = beta.copy()
+
+    return beta
+
 class GraphLasso:
-    def __init__(self, reg_param, max_iter=100, fit_intercept=False):
+    def __init__(self, reg_param, max_iter=100, fit_intercept=False, debug=False):
         self.alpha = reg_param
         self.max_iter = max_iter
-        self.lasso = Lasso(alpha=self.alpha, fit_intercept=fit_intercept)
+        self.lasso = Lasso(alpha=self.alpha, fit_intercept=fit_intercept, tol=1e-9)
+        self.debug = debug
 
     def fit(self, cov):
         S = cov
         W = S + self.alpha * np.eye(cov.shape[0])
+        precision = np.linalg.pinv(S)
         last_W = W.copy()
+        objs = []
         for _ in range(self.max_iter):
+            obj = np.log(np.linalg.det(precision)) - np.trace(S @ precision) - self.alpha * np.sum(np.abs(precision))
             for p in range(cov.shape[0]):
                 to_pick = [i for i in range(cov.shape[0]) if i != p]
+
                 s12 = S[p, to_pick]
                 w11 = W[to_pick, :][:, to_pick]
 
-                self.lasso.fit(w11, s12)
-
-                w12_upd = w11 @ self.lasso.coef_
+                self.lasso.fit(w11, s12, sample_weight=w11.shape[0]) # COORDINATE DESCENT INSTEAD
+                beta = self.lasso.coef_#coordinate_descent(w11, s12, self.alpha)
+                w12_upd = w11 @ beta
                 W[p, [j for j in range(cov.shape[0]) if j != p]] = w12_upd
                 W[[j for j in range(cov.shape[0]) if j != p], p] = w12_upd
 
+                theta22 = 1.0 / (W[p, p] - (w12_upd @ beta))
+                theta12 = -theta22 * beta
+
+                precision[p, [j for j in range(cov.shape[0]) if j != p]] = theta12
+                precision[[j for j in range(cov.shape[0]) if j != p], p] = theta12
+                precision[p, p] = theta22
+
+
             mac = np.mean(np.abs(W - last_W))
-            if mac <= 1e-4:
+            if self.debug == True:
+                print(f'Iteration: {_}: f_obj = {obj}')
+                print(f'Iteration: {_}: Mean absolute change = {mac}')
+            
+            objs.append(obj)
+
+            if mac <= 1e-10:
                 break
             last_W = W.copy()
 
-        self.precision = np.linalg.inv(W)
+        self.precision = precision
         self.adj = (self.precision != 0.).astype(int) - np.eye(self.precision.shape[0])
         self.graph = nx.from_numpy_array(self.adj)
+        self.objective = objs
 
         return self
